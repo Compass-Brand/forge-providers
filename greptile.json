@@ -1,0 +1,12 @@
+{
+  "strictness": 2,
+  "commentTypes": ["logic", "syntax", "style", "info"],
+  "triggerOnUpdates": true,
+  "includeBranches": ["main", "develop"],
+  "excludeBranches": ["draft/**", "wip/**"],
+  "ignorePatterns": "**/node_modules/**\n**/.venv/**\n**/dist/**\n**/build/**\n**/poetry.lock",
+  "instructions": "Forge Providers - Multi-provider LLM abstraction. TDD required. Python with Pydantic and asyncio.",
+  "statusCheck": true,
+  "includeConfidenceScore": true,
+  "fixWithAI": true
+}
