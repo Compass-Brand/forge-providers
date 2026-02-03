@@ -12,12 +12,12 @@ This file provides guidance to Claude Code when working in this repository.
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| Language | Python 3.11+ |
+| Layer     | Technology                |
+| --------- | ------------------------- |
+| Language  | Python 3.11+              |
 | Providers | OpenAI, Anthropic, Ollama |
-| Framework | Pydantic |
-| Async | asyncio |
+| Framework | Pydantic                  |
+| Async     | asyncio                   |
 
 ---
 
