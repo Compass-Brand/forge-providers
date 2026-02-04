@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -40,15 +40,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+        uses: actions/checkout@v4
 
       - name: Check for merge conflict markers
         run: |
-          if grep -rn "<<<<<<< \|======= \|>>>>>>> " --include="*.md" --include="*.py" --include="*.json" . 2>/dev/null; then
+          # Use anchored patterns to avoid false positives
+          if grep -rn "^<<<<<<<\|^=======\$\|^>>>>>>>" --include="*.md" --include="*.py" --include="*.ts" --include="*.js" --include="*.json" . 2>/dev/null; then
             echo "::error::Merge conflict markers found"
             exit 1
           fi
           echo "No merge conflict markers found"
+
+      - name: Check for hardcoded secrets
+        run: |
+          echo "Scanning for potential secrets..."
+          FOUND=0
+          # Check for common secret patterns
+          if grep -rn "PRIVATE.KEY\|-----BEGIN.*PRIVATE\|sk-[a-zA-Z0-9]\{20,\}\|ghp_[a-zA-Z0-9]\{36\}\|gho_[a-zA-Z0-9]\{36\}\|api[_-]?key.*['\"][a-zA-Z0-9]\{20,\}" --include="*.py" --include="*.ts" --include="*.js" --include="*.json" --include="*.yaml" --include="*.yml" . 2>/dev/null | grep -v node_modules | grep -v ".example" | head -10; then
+            echo "::warning::Potential hardcoded secrets detected - please review"
+            FOUND=1
+          fi
+          # Check for AWS keys
+          if grep -rn "AKIA[0-9A-Z]\{16\}" --include="*.py" --include="*.ts" --include="*.js" --include="*.json" . 2>/dev/null | grep -v node_modules | head -5; then
+            echo "::error::AWS access key pattern found"
+            exit 1
+          fi
+          echo "Secret scan complete"
 
   docs-audit:
     name: Documentation Audit
@@ -76,25 +93,9 @@ jobs:
             echo "::warning::Found $STALE_DOCS potentially stale documentation files"
           fi
 
-  gitleaks:
-    name: Secret Scan
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   syntax-check:
     name: Syntax Validation
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -106,11 +107,11 @@ jobs:
         uses: docker://rhysd/actionlint:latest
         with:
           args: -color
+        continue-on-error: true  # May flag pre-existing issues in other workflows
 
   editorconfig-check:
     name: EditorConfig
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -121,7 +122,6 @@ jobs:
   license-review:
     name: License Compliance
     runs-on: ubuntu-latest
-    continue-on-error: true
     if: github.event_name == 'pull_request'
     steps:
       - name: Checkout
