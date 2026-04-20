@@ -2,5 +2,4 @@
 
 # Inherit settings from compass-brand parent
 inheritance: true
-
-# Project-specific overrides for Forge Providers
+# Project-specific overrides for Compass Engine
